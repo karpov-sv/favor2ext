@@ -53,6 +53,10 @@ def get_time_from_night(night):
 def parse_time(string):
     return datetime.datetime.strptime(string, '%d.%m.%Y %H:%M:%S.%f')
 
+def get_night(t):
+    et = t - datetime.timedelta(hours=12)
+    return "%04d_%02d_%02d" % (et.year, et.month, et.day)
+
 class Favor2(DB):
     def __init__(self, base='.', readonly=False, latitude=43.649861, longitude=41.4314722, elevation=2030, **kwargs):
         DB.__init__(self, **kwargs)
