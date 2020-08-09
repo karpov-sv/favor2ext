@@ -6,6 +6,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_protect
+from django.db.models import Count, Min, Sum, Avg
 
 import datetime, re, urllib
 
@@ -15,17 +16,15 @@ from .utils import permission_required_or_403, redirect_get, db_query
 # Favor2ext modules
 from .favor2.resolve import resolve
 
-@cache_page(3600)
+# @cache_page(3600)
 def index(request):
     context = {}
 
-    # sites = db_query('select site,count(*),(select night from images where site=i.site order by time desc limit 1) as last, (select night from images where site=i.site order by time asc limit 1) as first from images i group by i.site order by i.site;', (), simplify=False)
-
-    # context['sites'] = sites
+    context['nights'] = db_query('select min(night),max(night),count(*) from images', ())
 
     return TemplateResponse(request, 'index.html', context=context)
 
-@cache_page(3600)
+# @cache_page(3600)
 @csrf_protect
 def search(request, mode='images'):
     context = {}

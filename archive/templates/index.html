@@ -3,78 +3,32 @@
 {% load tags %}
 {% load static %}
 
-{% block ptitle %}FRAM Archive{% endblock %}
+{% block ptitle %}Mini-MegaTORTORA Archive{% endblock %}
 
-{% block title %}FRAM data archive{% endblock %}
+{% block title %}Mini-MegaTORTORA data archive{% endblock %}
 
 {% block content %}
 
   <p>
-    <span class="lead">FRAM (F/(Ph)otometric Robotic Atmospheric Monitor)</span> is a series of small robotic telescopes primarily designed for a continuous atmospheric monitoring of astronomical sites in order to measure atmospheric transparency is required with high spatial or temporal resolution. The original FRAM has been operated at the Pierre Auger Observatory in Argentina for more than a decade, while three more FRAMs are foreseen to be used by the Cherenkov Telescope Array (CTA). Two of FRAM sites are equipped, in addition to a primary wide-field teleophoto lens, with a larger diameter traditional telescopes intended for a follow-up and monitoring observations of a wide range of transient objects (gamma-ray bursts, variable stars, comets, etc).
+    <span class="lead">The Mini-MegaTORTORA</span> (MMT-9) system is an unique multi-purpose wide-field monitoring instrument built for and owned by the Kazan Federal University, presently operated under an agreement between Kazan Federal University and Special Astrophysical Observatory, Russia.
   </p>
 
-  <div class="card-group mb-4">
-    {% for site in sites %}
-      <div class="card">
-        <!-- <img class="card-img-top" src="https://pc048b.fzu.cz/fram/webcam/{{ site.site }}.jpg"/> -->
-        <img class="card-img-top" src="{% get_root %}{% static site.site|add:'.jpg' %}"/>
-        <div class="card-body">
-          <h5 class="card-title">{{ site.site|upper }}</h5>
+  <p>
+    It includes a set of nine individual channels installed in pairs on five equatorial mounts. Every channel has a celostate mirror installed before the Canon EF85/1.2 objective for a rapid (faster than 1 second) adjusting of the objective direction in a limited range (approximately 10 degrees to any direction). This allows for either mosaicking the larger field of view, or for pointing all the channels in one direction. In the latter regime, a set of color (Johnson's B, V or R) and polarimetric (three different directions) filters may be inserted before the objective to maximize the information acquired for the observed region of the sky (performing both three-color photometry and polarimetry).
+  </p>
 
-          <p class="card-text">
-            <a href="{% url 'images' %}?site={{ site.site }}">{{ site.count }}</a> images
-            <br>
-            First Night: <a href="{% url 'images' %}?site={{ site.site }}&night={{ site.first }}">{{ site.first }}</a>
-            <br>
-            Latest Data: <a href="{% url 'images' %}?site={{ site.site }}&night={{ site.last }}">{{ site.last }}</a>
-          </p>
+  <p>
+    The channels are equipped with an Andor Neo sCMOS detector having 2560x2160 pixels 6.4um each. Field of view of a channel is roughly 9x11 degrees with angular resolution of roughly 16'' per pixel. The detector is able to operate with exposure times as small as 0.03 s, in our work we use 0.1 s exposures providing us with 10 frames per second.
+  </p>
 
-        </div>
-      </div>
-    {% endfor %}
-    </div>
+  <p>
+    The Mini-MegaTORTORA (MMT) instrument is operational since Jun 2014. This archive presents the subset of data it acquired in a wide-field "deep survey" regime, mostly using exposures of 20 to 60 seconds in a white light (the complete Mini-MegaTORTORA data, including archives of detected meteors, satellites etc, is available <a href="http://mmt.favor2.info">here</a>).
+  </p>
 
-    <h4>Our telescopes</h4>
-    <ul>
-      <li>
-        <span class="lead">FRAM-Auger</span> is a 30 cm f/6.8 telescope located at Pierre Auger observatory, Malargue, Argentina. Telescope is equipped with B, V, R and I filters, and has a field of view of 60’x60’, with pixel scale of 0.92’’/pix. Also, there is a wide-field camera based on a Nikkor 300/2.8 lens and G4-16000 CCD, providing 7x7 degrees field of view with 6’’/pix pixel scale. The camera is equipped with B, V, R, and I filters.
-      </li>
+  <p>
+    Archive covers nights from <a href="{% url 'images' %}?night={{ nights.min }}">{{ nights.min }}</a> till <a href="{% url 'images' %}?night={{ nights.max }}">{{ nights.max }}</a>, and has <a href="{% url 'images' %}">{{ nights.count }}</a> images in total.
+  </p>
 
-      <li>
-        <span class="lead">FRAM-CTA-N</span> is a 25 cm f/6.3 telescope located at Observatorio del Roque de los Muchachos, La Palma, Spain. Telescope is equipped with B, V, R and z filters, with 26’x26’ field of view and 1.52’’/pix pixel scale. Also, there is a wide-field camera based on a Zeiss 135/2.0 lens and a G4-16000 CCD, providing 15x15 deg fields of view with 14.1’’/pix pixel scale, and equipped with B, V, R, and I filters.
-      </li>
-
-      <li>
-        <span class="lead">FRAM-CTA-S0</span> and <span class="lead">FRAM-CTA-1</span> are twin wide-field cameras installed at Paranal Observatory, Chile. They are based on a Zeiss 135/2.0 lenses and a G4-16000 CCDs, providing 15x15 deg fields of view with 14.1’’/pix pixel scale, and are equipped with B, V, R, and I filters.
-      </li>
-    </ul>
-
-    <h4>Our team</h4>
-    <p>
-      Michael Prouza, Jan Ebr, Petr Janeček, Martin Mašek, Ronan Cunniffe, Sergey Karpov (Institute of Physics, Czech Academy of Sciences)
-      <br>
-      Martin Jelinek (Astronomical Institute of Czech Academy of Sciences)
-    </p>
-
-    <h4>Funding</h4>
-    <p>
-    FRAM is maintained by Institute of Physics, Czech Academy of Sciences, and is funded by Ministry of Education, Youth and Sports of the Czech Republic
-    </p>
-
-    <h4>References</h4>
-
-    <ul>
-      <li>
-        Janeček, Petr; Ebr, Jan; Juryšek, Jakub; Prouza, Michael; Blažek, Jiří; Trávníček, Petr; Mandát, Dušan; Pech, Miroslav; Karpov, Sergey; Cunniffe, Ronan; Mašek, Martin; Jelínek, Martin; Ebrová, Ivana. "FRAM telescopes and their measurements of aerosol content at the Pierre Auger Observatory and at future sites of the Cherenkov Telescope Array", Atmospheric Monitoring for High Energy Astroparticle Detectors, Anacapri, Italy, Edited by Valore, L.; Colalillo, R.; Guarino, F.; EPJ Web of Conferences, Volume 197, id.02008
-      </li>
-
-      <li>
-        Ebr, J.; Janeček, P.; Prouza, M.; Kubánek, P.; Jelínek, M.; Mašek, M.; Ebrová, I.; Černý, J. "FRAM: showers, comets, GRBs and popular science", Revista Mexicana de Astronomía y Astrofísica (Serie de Conferencias) Vol. 45, pp. 114--117 (2014)
-      </li>
-
-      <li>
-        Prouza, Michael; Jelínek, Martin; Kubánek, Petr; Ebr, Jan; Trávníček, Petr; Šmída, Radomír "FRAM—The Robotic Telescope for the Monitoring of the Wavelength Dependence of the Extinction: Description of Hardware, Data Analysis, and Results", Advances in Astronomy, 2010, article id. 849382
-      </li>
-    </ul>
+  <img class="img-fluid mx-auto d-block" src="{% get_root %}{% static "survey_coverage.jpg" %}"/>
 
 {% endblock %}

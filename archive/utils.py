@@ -9,7 +9,7 @@ import urllib
 from django.contrib.auth.decorators import permission_required, user_passes_test, PermissionDenied
 
 #@transaction.commit_on_success
-def db_query(string, params, db='fram', debug=False, simplify=True):
+def db_query(string, params, db='favor2', debug=False, simplify=True):
     connection = connections[db]
 
     cursor = connection.cursor()

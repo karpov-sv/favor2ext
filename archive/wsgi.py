@@ -28,7 +28,7 @@ sys.path.append(archive_uppath)
 
 os.chdir(archive_uppath)
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "archive.settings")
+os.environ["DJANGO_SETTINGS_MODULE"] = "archive.settings"
 
 # This application object is used by any WSGI server configured to use this
 # file. This includes Django's development server, if the WSGI_APPLICATION
