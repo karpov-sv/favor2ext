@@ -1,0 +1,111 @@
+{% extends "template.html" %}
+
+{% block head %}
+  {% include "popup_image.html" %}
+{% endblock %}
+
+{% block ptitle %}Image {{image.id}} : FRAM Archive{% endblock %}
+
+{% block title %}Image {{image.id}}{% endblock %}
+
+{% block content %}
+
+  <div class="text-center">
+    <a href="{% url 'image_full' image.id %}" title="Click for a full-size image"><img src="{% url 'image_view' image.id %}" class="img-thumbnail center-block"/></a>
+  </div>
+
+  <div class="text-center">
+    <a href="{% url 'image_full' image.id %}" title="Click for a full-size image"><i class="fa fa-expand"></i> Full-size image</a>
+    <span> - </span>
+    <a href="{% url 'image_full' image.id %}?raw=1" title="Click for a raw image"><i class="fa fa-file-image-o"></i> Raw image</a>
+    <span> - </span>
+    <a href="{% url 'image_download' image.id %}" title="Click to download original file"><i class="fa fa-download"></i> Download FITS</a>
+    <span> - </span>
+    <a href="{% url 'image_download_processed' image.id %}" title="Click to download processed file"><i class="fa fa-download"></i> Processed FITS</a>
+    <br>
+    <a href="{% url 'image_bg' image.id %}" title="Click to inspect image background" onClick="return popupImage(event, '{%  url 'image_bg' image.id %}', 'Background', true)"><i class="fa fa-map"></i> Background</a>
+    <span> - </span>
+    <a href="{% url 'image_fwhm' image.id %}" title="Click to inspect image FWHM"  onClick="return popupImage(event, '{%  url 'image_fwhm' image.id %}', 'FWHM', true)"><i class="fa fa-bullseye"></i> FWHM</a>
+    <span> - </span>
+    <a href="{% url 'image_wcs' image.id %}" title="Click to inspect image WCS" onClick="return popupImage(event, '{%  url 'image_wcs' image.id %}', 'WCS', true)"><i class="fa fa-map-marker"></i> WCS</a>
+    <span> - </span>
+    <a href="{% url 'image_filters' image.id %}" title="Click to inspect image filters" onClick="return popupImage(event, '{%  url 'image_filters' image.id %}', 'Filters', true)"><i class="fa fa-cubes"></i> Filters</a>
+    <span> - </span>
+    <a href="{% url 'image_zero' image.id %}" title="Click to inspect image ZERO" onClick="return popupImage(event, '{%  url 'image_zero' image.id %}', 'Zero point', true)"><i class="fa fa-map-o"></i> Zero point</a>
+  </div>
+
+<table class="table table-sm table-striped mb-4">
+  <tr><td>Id:</td><td>{{image.id}}</td></tr>
+  <tr><td>Filename:</td><td><a href="{% url 'image_download' image.id %}" title="Download FITS"><i class="fa fa-download"></i> {{ image.filename }}</a></td></tr>
+
+  {% if dark %}
+    <tr><td>Dark:</td><td><a href="{% url 'image_details' dark.id %}" title="View dark frame"><i class="fa fa-file-image-o"></i> {{ dark.filename }}</a></td></tr>
+  {% endif %}
+  {% if flat %}
+    <tr><td>Flat:</td><td><a href="{% url 'image_details' flat.id %}" title="View flat frame"><i class="fa fa-file-image-o"></i> {{ flat.filename }}</a></td></tr>
+  {% endif %}
+
+  <tr><td>Time:</td><td>{{image.time|date:"Y-m-d H:i:s"}} UT</td></tr>
+
+  <tr><td>Night:</td><td><a href="{% url 'images' %}?night={{ image.night }}" title="All images from this night">{{image.night}}</a></td></tr>
+
+  <tr><td>Channel:</td><td><a href="{% url 'images' %}?night={{ image.night }}&channel={{ image.channel }}" title="All images from this night and channel">{{image.channel}}</td></tr>
+
+    <tr><td>Type:</td><td><a href="{% url 'images' %}?night={{ image.night }}&channel={{ image.channel }}&type={{ image.type }}" title="All images from this night and channel of this type">{{ image.type }}</a>
+    {% if image.keywords.TARGET %} / {{ image.keywords.TARGET }}{% endif %}</td></tr>
+
+  <tr><td>Image size:</td><td>
+    {{image.width}}x{{image.height}}
+  </td></tr>
+
+  <tr><td>Exposure:</td><td>{{image.exposure}} s
+    {% if image.keywords.AVERAGED %} x {{ image.keywords.AVERAGED }} frames averaged{% endif %}
+  </td></tr>
+
+  <tr><td>Filter:</td><td><a href="{% url 'images' %}?night={{ image.night }}&channel={{ image.channel }}&filter={{ image.filter }}" title="All images from this night and channel in this filter">{{  image.filter }}</td></tr>
+
+  <tr><td>RA:</td><td>{{image.ra}}</td></tr>
+  <tr><td>Dec:</td><td>{{image.dec}}</td></tr>
+
+  <tr><td>Mirror:</td><td>{{image.pos0}} {{image.pos1}}</td></tr>
+
+  <tr><td>Cover:</td><td>{{ image.keywords.COVER }} - {% if image.keywords.COVER %}Open{% else %}Closed{% endif %}</td></tr>
+  <tr><td>Lamp:</td><td>{{ image.keywords.LAMP }} - {% if image.keywords.LAMP %}On{% else %}Off{% endif %}</td></tr>
+
+  <tr><td>Shutter:</td><td>{{ image.shutter }} - {% if image.shutter %}Global{% else %}Rolling{% endif %}</td></tr>
+
+  <tr><td>Image mean:</td><td>{{image.mean}} ADU</td></tr>
+
+
+</table>
+
+<!-- Full FITS header -->
+<div class="card">
+  <h5 class="card-header" data-toggle="collapse" data-target="#collapseHeader" aria-expanded="false" aria-controls="collapseHeader">
+    Full FITS header
+  </h5>
+
+  <div class="collapse" id="collapseHeader">
+    <div class="card-body pr-0 pl-0 pt-0 pb-0">
+
+      <table class="table table-sm table-striped">
+        {% if keywords %}
+          {% for kw in keywords %}
+            <tr {% if kw.key|lower == 'exposure' or kw.key|lower == 'shutter' or kw.key|lower == 'filter' %}class='success'{% endif %}>
+              <td>{{kw.key}}:</td>
+              <td>{{kw.value}}</td>
+              <td>{{kw.comment}}</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          {% for key,value in image.keywords.items %}
+            <tr><td>{{key}}:</td><td colspan=2>{{value}}</td></tr>
+          {% endfor %}
+        {% endif %}
+      </table>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
