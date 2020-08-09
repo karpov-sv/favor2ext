@@ -31,10 +31,6 @@ def process_file(filename, night=None, favor2=None, verbose=False):
     if verbose:
         print(night,header['TYPE'])
 
-    # Skip old master calibrations
-    # if header['TYPE'] in ['mdark', 'mflat']:
-    #     return None
-
     image = fits.getdata(filename, -1).astype(np.double)
 
     # Frame dimensions
@@ -55,12 +51,20 @@ def process_file(filename, night=None, favor2=None, verbose=False):
 
     if type not in ['dark', 'masterdark', 'flat', 'skyflat', 'superflat', 'masterflat'] and header.get('CTYPE1'):
         wcs = WCS(header)
-        if not wcs:
+        if not wcs or not wcs.sip:
             print('No WCS information in', filename)
             return None
 
         ra,dec = wcs.all_pix2world([0, image.shape[1], 0.5*image.shape[1]], [0, image.shape[0], 0.5*image.shape[0]], 0)
+        ra1,dec1 = wcs.all_pix2world([image.shape[1], 0], [0, image.shape[0]], 0)
         radius = 0.5*coords.sphdist(ra[0], dec[0], ra[1], dec[1])[0]
+        radius1 = 0.5*coords.sphdist(ra1[0], dec1[0], ra1[1], dec1[1])[0]
+
+        # Sanity checking with some hard-coded values
+        if radius < 7.25 or radius > 7.45 or np.abs(1.0 - radius/radius1) > 0.1:
+            print('Broken WCS information in', filename)
+            return None
+
         ra0,dec0 = ra[2],dec[2]
 
         # Frame footprint
@@ -73,7 +77,7 @@ def process_file(filename, night=None, favor2=None, verbose=False):
 
     else:
         # Should we really discard WCS for non-object frames?
-        ra0,dec0,radius = 0,0,0
+        ra0,dec0,radius = None,None,None
         footprint,footprint10 = None,None
 
     filter = header.get('FILTER', 'unknown')
@@ -82,12 +86,14 @@ def process_file(filename, night=None, favor2=None, verbose=False):
     exposure = header.get('EXPOSURE')
     shutter = header.get('SHUTTER')
     channel = header.get('CHANNEL ID')
+    pos0 = header.get('MIRROR_POS0')
+    pos1 = header.get('MIRROR_POS0')
 
     mean = np.mean(image)
 
     keywords = dict(header)
 
-    favor2.query('INSERT INTO images (filename,night,time,channel,type,filter,exposure,shutter,ra,dec,radius,width,height,mean,footprint,footprint10,keywords) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (filename) DO NOTHING', (filename,night,time,channel,type,filter,exposure,shutter,ra0,dec0,radius,width,height,mean,footprint,footprint10,keywords))
+    favor2.query('INSERT INTO images (filename,night,time,channel,type,filter,exposure,shutter,pos0,pos1,ra,dec,radius,width,height,mean,footprint,footprint10,keywords) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (filename) DO NOTHING', (filename,night,time,channel,type,filter,exposure,shutter,pos0,pos1,ra0,dec0,radius,width,height,mean,footprint,footprint10,keywords))
 
     return {'filename':filename, 'night':night, 'time':time, 'channel':channel, 'type':type, 'filter':filter, 'shutter':shutter, 'ra0':ra0, 'dec0':dec0, 'radius':radius, 'exposure':exposure, 'width':width, 'height':height, 'mean':mean, 'keywords':keywords}
 
@@ -111,13 +117,13 @@ def process_dir(dir, dbname='favor2'):
         if filename in filenames:
             continue
         try:
-            result = process_file(filename, night=night, favor2=favor2)
+            result = process_file(filename, night=night, favor2=favor2, verbose=True)
 
             sys.stdout.write('\r  %d / %d - %s' % (j, len(files), filename))
             sys.stdout.flush()
 
         except KeyboardInterrupt:
-                raise
+            raise
 
         except:
             import traceback
