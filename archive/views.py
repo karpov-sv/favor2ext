@@ -13,7 +13,7 @@ from .models import Images
 from .utils import permission_required_or_403, redirect_get, db_query
 
 # Favor2ext modules
-from .favor2ext.resolve import resolve
+from .favor2.resolve import resolve
 
 @cache_page(3600)
 def index(request):

@@ -30,8 +30,8 @@ from . import settings
 # Favor2ext modules
 # from .fram import calibrate
 # from .fram import survey
-from .favor2ext import utils
-from .favor2ext.favor2 import Favor2, parse_time, get_night
+from .favor2 import utils
+from .favor2.favor2 import Favor2, parse_time, get_night
 
 # TODO: memoize the result
 def find_calibration_image(image, type='masterdark', night=None, site=None, ccd=None, serial=None, exposure=None, cropped_width=None, cropped_height=None, filter=None, binning=None):
