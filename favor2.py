@@ -74,16 +74,18 @@ class Favor2(DB):
     def tempdir(self, prefix='favor2'):
         return tempfile.mkdtemp(prefix=prefix)
 
-    def find_image(self, time, type='survey', channel_id=-1, before=True):
+    def find_image(self, time, type='survey', channel=-1, shutter=None, before=True):
         #res = self.query('select find_image(%s, %s, %s);', (time, type, channel_id))
 
+        sub = '' if shutter is None else 'and shutter=%d ' % int(shutter)
+
         if before:
-            res = self.query('select filename from images where time <= %s and type=%s and channel_id=%s order by time desc limit 1;', (time, type, channel_id))
+            res = self.query('select filename from images where time <= %s and type=%s and channel=%s ' + sub + 'order by time desc limit 1;', (time, type, channel))
         else:
             res = None
 
         if not res:
-            res = self.query('select filename from images where time > %s and type=%s and channel_id=%s order by time asc limit 1;', (time, type, channel_id))
+            res = self.query('select filename from images where time > %s and type=%s and channel=%s ' + sub + 'order by time asc limit 1;', (time, type, channel))
 
         return res
 
