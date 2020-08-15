@@ -3,7 +3,7 @@
 {% load el_pagination_tags %}
 {% load filters %}
 
-{% block ptitle %}Images : Mini-MegaTORTORA Archive {% endblock %}
+{% block ptitle %}Images : Mini-MegaTORTORA Sky Survey{% endblock %}
 
 {% block title_div %}
   <h1>
@@ -60,13 +60,13 @@
         </td>
 
         {% with text="channel="|addstr:image.channel %}
-          <td><a href="?{{ request.GET|GET_remove:"channel"|GET_append:text|GET_urlencode }}" title="{{ image.keywords.OBJECT }}">{{ image.channel }}</a></td>
+          <td title="Shutter: {{ image.shutter }} Mirror: {{ image.pos0 }} {{ image.pos1 }}"><a href="?{{ request.GET|GET_remove:"channel"|GET_append:text|GET_urlencode }}" title="{{ image.keywords.OBJECT }}">{{ image.channel }}</a></td>
         {% endwith %}
 
         <td title="Alt/Az {{ image.keywords.TEL_ALT }} {{ image.keywords.TEL_AZ }}">{{ image.ra|floatformat:3 }} {{ image.dec|floatformat:3 }}</td>
 
         <td><a href="{% url 'image_details' image.id %}" title="View image details">
-          <img src="{% url 'image_preview' image.id %}" class="img-thumbnail">
+          <img src="{% url 'image_preview' image.id %}?raw" class="img-thumbnail">
         </a></td>
         <!-- <td><a href="{% url 'image_download' image.id %}" title="Download FITS"><i class="fa fa-download"></i> </a></td> -->
       </tr>

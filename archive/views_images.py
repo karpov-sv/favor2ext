@@ -28,41 +28,34 @@ from .utils import permission_required_or_403
 from . import settings
 
 # Favor2ext modules
-# from .fram import calibrate
+from .parent import calibrate
 # from .fram import survey
-from .favor2 import utils
-from .favor2.favor2 import Favor2, parse_time, get_night
+from .parent import utils
+from .parent.favor2 import Favor2, parse_time, get_night
 
 # TODO: memoize the result
-def find_calibration_image(image, type='masterdark', night=None, site=None, ccd=None, serial=None, exposure=None, cropped_width=None, cropped_height=None, filter=None, binning=None):
-    return None
-    # calibs = Calibrations.objects.all()
+def find_calibration_image(image, type='masterdark'):#, night=None, site=None, ccd=None, serial=None, exposure=None, cropped_width=None, cropped_height=None, filter=None, binning=None):
+    # return None
+    calibs = Images.objects.all()
+    calibs = calibs.filter(type=type)
 
-    # calibs = calibs.filter(type=type)
+    calibs = calibs.filter(channel=image.channel)
+    calibs = calibs.filter(shutter=image.shutter)
 
-    # calibs = calibs.filter(site=image.site)
-    # calibs = calibs.filter(ccd=image.ccd)
-    # calibs = calibs.filter(serial=image.serial)
-
-    # if type not in ['bias', 'dcurrent', 'masterflat']:
-    #     calibs = calibs.filter(exposure=image.exposure)
-
-    # calibs = calibs.filter(cropped_width=image.cropped_width)
-    # calibs = calibs.filter(cropped_height=image.cropped_height)
-    # calibs = calibs.filter(binning=image.binning)
-
-    # if type in ['masterflat']:
-    #     calibs = calibs.filter(filter=image.filter)
+    if type in ['masterflat']:
+        calibs = calibs.filter(filter=image.filter)
+        calibs = calibs.filter(pos0=image.pos0)
+        calibs = calibs.filter(pos1=image.pos1)
 
     # print(type, image.site, image.ccd, image.serial, image.binning, image.keywords['NAXIS1'], image.keywords['NAXIS2'], image.filter, image.exposure)
 
-    # calibs1 = calibs.filter(night__lte=image.night).order_by('-night')
-    # if calibs1.first():
-    #     return calibs1.first()
-    # else:
-    #     # No frames earlier than the date, let's look for a later one!
-    #     calibs1 = calibs.filter(night__gte=image.night).order_by('night')
-    #     return calibs1.first()
+    calibs1 = calibs.filter(night__lte=image.night).order_by('-night')
+    if calibs1.first():
+        return calibs1.first()
+    else:
+        # No frames earlier than the date, let's look for a later one!
+        calibs1 = calibs.filter(night__gte=image.night).order_by('night')
+        return calibs1.first()
 
 def get_images(request):
     images = Images.objects.all()
@@ -200,15 +193,9 @@ def image_details(request, id=0):
     context['image'] = image
 
     # Calibrations
-    if image.type not in ['masterdark', 'masterflat', 'bias', 'dcurrent', 'dark', 'zero']:
+    if image.type not in ['masterdark', 'masterflat', 'dark']:
         context['dark'] = find_calibration_image(image, 'masterdark')
-
-        if context['dark'] is None:
-            context['bias'] = find_calibration_image(image, 'bias')
-            context['dcurrent'] = find_calibration_image(image, 'dcurrent')
-
-        if image.type not in ['flat']:
-            context['flat'] = find_calibration_image(image, 'masterflat')
+        context['flat'] = find_calibration_image(image, 'masterflat')
 
     try:
         # Try to read original FITS keywords with comments
@@ -224,49 +211,41 @@ def image_details(request, id=0):
 
     return TemplateResponse(request, 'image.html', context=context)
 
-@cache_page(3600)
+# @cache_page(3600)
 def image_preview(request, id=0, size=0):
     image = Images.objects.get(id=id)
     filename = image.filename
     filename = posixpath.join(settings.BASE_DIR, filename)
 
-    data = fits.getdata(filename, -1)
+    data = fits.getdata(filename, -1).astype(np.double)
     header = fits.getheader(filename, -1)
 
     if request.GET.has_key('size'):
         size = int(request.GET.get('size', 0))
 
     if not request.GET.has_key('raw'):
-        if image.type not in ['masterdark', 'masterflat', 'bias', 'dcurrent']:
+        if image.type not in ['masterdark', 'masterflat']:
             dark = None
 
             if image.type not in ['dark', 'zero']:
                 cdark = find_calibration_image(image, 'masterdark')
                 if cdark is not None:
                     dark = fits.getdata(cdark.filename, -1)
-                # else:
-                #     cbias,cdc = find_calibration_image(image, 'bias'), find_calibration_image(image, 'dcurrent')
-                #     if cbias is not None and cdc is not None:
-                #         bias = fits.getdata(cbias.filename, -1)
-                #         dc = fits.getdata(cdc.filename, -1)
-
-                #         dark = bias + image.exposure*dc
 
             if dark is not None:
-                # data,header = calibrate.calibrate(data, header, dark=dark) # Subtract dark and linearize
-                data -= dark
+                data,header = calibrate.calibrate(data, header, dark=dark) # Subtract dark and linearize
+                # data -= dark
 
-                if image.type not in ['flat1']:
+                if image.type not in ['masterflat', 'flat']:
                     cflat = find_calibration_image(image, 'masterflat')
                     if cflat is not None:
                         flat = fits.getdata(cflat.filename, -1)
-                        data *= np.median(flat)/flat
-            # else:
-            #     data,header = calibrate.crop_overscans(data, header)
+                        idx = flat > 0.5
+                        data[idx] *= np.median(flat[idx])/flat[idx]
 
         ldata = data
-    # else:
-    #     ldata,lheader = calibrate.crop_overscans(data, header, subtract=False)
+    else:
+        ldata,lheader = data,header
 
     if size:
         data = rescale(data, size/data.shape[1], mode='reflect', multichannel=False, anti_aliasing=True, preserve_range=True)
@@ -301,31 +280,22 @@ def image_download(request, id, raw=True):
         data = fits.getdata(filename, -1).astype(np.double)
         header = fits.getheader(filename, -1)
 
-        if image.type not in ['masterdark', 'masterflat', 'dcurrent', 'bias']:
+        if image.type not in ['masterdark', 'masterflat']:
             dark = None
 
-            if image.type not in ['dark', 'zero']:
+            if image.type not in ['dark']:
                 cdark = find_calibration_image(image, 'masterdark')
                 if cdark is not None:
                     dark = fits.getdata(cdark.filename, -1)
-                else:
-                    cbias,cdc = find_calibration_image(image, 'bias'), find_calibration_image(image, 'dcurrent')
-                    if cbias is not None and cdc is not None:
-                        bias = fits.getdata(cbias.filename, -1)
-                        dc = fits.getdata(cdc.filename, -1)
-
-                        dark = bias + image.exposure*dc
 
             if dark is not None:
                 data,header = calibrate.calibrate(data, header, dark=dark) # Subtract dark and linearize
 
-                if image.type not in ['flat']:
+                if image.type not in ['skyflat']:
                     cflat = find_calibration_image(image, 'masterflat')
                     if cflat is not None:
                         flat = fits.getdata(cflat.filename, -1)
                         data *= np.median(flat)/flat
-            else:
-                data,header = calibrate.crop_overscans(data, header)
 
         s = StringIO()
         fits.writeto(s, data, header)
@@ -361,48 +331,39 @@ def image_analysis(request, id=0, mode='fwhm'):
     header = fits.getheader(filename, -1)
 
     # Clean up the header from COMMENT and HISTORY keywords that may break things
-    header.remove('COMMENT', remove_all=True)
-    header.remove('HISTORY', remove_all=True)
+    header.remove('COMMENT', remove_all=True, ignore_missing=True)
+    header.remove('HISTORY', remove_all=True, ignore_missing=True)
 
-    # if image.type not in ['masterdark', 'masterflat', 'dcurrent', 'bias']:
-    #     dark = None
+    if image.type not in ['masterdark', 'masterflat']:
+        dark = None
 
-    #     if image.type not in ['dark', 'zero']:
-    #         cdark = find_calibration_image(image, 'masterdark')
-    #         if cdark is not None:
-    #             dark = fits.getdata(cdark.filename, -1)
-    #         else:
-    #             cbias,cdc = find_calibration_image(image, 'bias'), find_calibration_image(image, 'dcurrent')
-    #             if cbias is not None and cdc is not None:
-    #                 bias = fits.getdata(cbias.filename, -1)
-    #                 dc = fits.getdata(cdc.filename, -1)
+        if image.type not in ['dark']:
+            cdark = find_calibration_image(image, 'masterdark')
+            if cdark is not None:
+                dark = fits.getdata(cdark.filename, -1)
 
-    #                 dark = bias + image.exposure*dc
+        if dark is not None:
+            data,header = calibrate.calibrate(data, header, dark=dark) # Subtract dark and linearize
 
-    #     if dark is not None:
-    #         data,header = calibrate.calibrate(data, header, dark=dark) # Subtract dark and linearize
+            if image.type not in ['flat', 'skyflat']:
+                cflat = find_calibration_image(image, 'masterflat')
+                if cflat is not None:
+                    flat = fits.getdata(cflat.filename, -1)
+                    data *= np.median(flat)/flat
 
-    #         if image.type not in ['flat']:
-    #             cflat = find_calibration_image(image, 'masterflat')
-    #             if cflat is not None:
-    #                 flat = fits.getdata(cflat.filename, -1)
-    #                 data *= np.median(flat)/flat
-    #     else:
-    #         data,header = calibrate.crop_overscans(data, header)
+    if mode == 'zero':
+        fig = Figure(facecolor='white', dpi=72, figsize=(16,8), tight_layout=True)
+    else:
+        fig = Figure(facecolor='white', dpi=72, figsize=(14,12), tight_layout=True)
 
-    # if mode == 'zero':
-    #     fig = Figure(facecolor='white', dpi=72, figsize=(16,8), tight_layout=True)
-    # else:
-    #     fig = Figure(facecolor='white', dpi=72, figsize=(14,12), tight_layout=True)
+    if mode == 'bg':
+        # Extract the background
+        import sep
+        bg = sep.Background(data.astype(np.double))
 
-    # if mode == 'bg':
-    #     # Extract the background
-    #     import sep
-    #     bg = sep.Background(data.astype(np.double))
-
-    #     ax = fig.add_subplot(111)
-    #     utils.imshow(bg.back(), ax=ax, origin='lower')
-    #     ax.set_title('%s - %s %s %s %s - bg mean %.2f median %.2f rms %.2f' % (posixpath.split(filename)[-1], image.site, image.ccd, image.filter, str(image.exposure), np.mean(bg.back()), np.median(bg.back()), np.std(bg.back())))
+        ax = fig.add_subplot(111)
+        utils.imshow(bg.back(), ax=ax, origin='lower')
+        ax.set_title('%s - channel %s shutter %s %s %s - bg mean %.2f median %.2f rms %.2f' % (posixpath.split(filename)[-1], image.channel, image.shutter, image.filter, str(image.exposure), np.mean(bg.back()), np.median(bg.back()), np.std(bg.back())))
 
     # elif mode == 'fwhm':
     #     # Detect objects and plot their FWHM
