@@ -74,18 +74,63 @@ class Favor2(DB):
     def tempdir(self, prefix='favor2'):
         return tempfile.mkdtemp(prefix=prefix)
 
-    def find_image(self, time, type='survey', channel=-1, shutter=None, before=True):
-        #res = self.query('select find_image(%s, %s, %s);', (time, type, channel_id))
+    def find_image(self, type='survey', time=None, channel=None, shutter=None, filter=None, pos0=None, pos1=None, header=None, before=True, debug=False):
+        if channel is None and header is not None:
+            channel = header.get('CHANNEL ID', 0)
 
-        sub = '' if shutter is None else 'and shutter=%d ' % int(shutter)
+        if shutter is None and header is not None:
+            shutter = header.get('SHUTTER', 0)
+
+        if type in ['masterflat']:
+            if pos0 is None and header is not None:
+                pos0 = header.get('MIRROR_POS0', 0)
+
+            if pos1 is None and header is not None:
+                pos1 = header.get('MIRROR_POS1', 0)
+
+        if type not in ['dark', 'masterdark']:
+            if filter is None and header is not None:
+                filter = header.get('FILTER', 'Clear')
+
+        if time is None and header is not None:
+            time = header['TIME']
+
+        if isinstance(time, basestring) or isinstance(time, str):
+            time = parse_time(time)
+
+        conditions,args = [],[]
+
+        if type is not None:
+            conditions.append('type=%s')
+            args.append(type)
+
+        if channel is not None:
+            conditions.append('channel=%s')
+            args.append(channel)
+
+        if shutter is not None:
+            conditions.append('shutter=%s')
+            args.append(shutter)
+
+        if filter is not None:
+            conditions.append('filter=%s')
+            args.append(filter)
+
+        if pos0 is not None:
+            conditions.append('pos0=%s')
+            args.append(pos0)
+
+        if pos1 is not None:
+            conditions.append('pos1=%s')
+            args.append(pos1)
+
+        res = None
 
         if before:
-            res = self.query('select filename from images where time <= %s and type=%s and channel=%s ' + sub + 'order by time desc limit 1;', (time, type, channel))
-        else:
-            res = None
+            res = self.query('SELECT filename FROM IMAGES WHERE ' + ' AND '.join(conditions + ['time <= %s']) + ' ORDER BY time DESC LIMIT 1;', args + [time], debug=debug)
 
-        if not res:
-            res = self.query('select filename from images where time > %s and type=%s and channel=%s ' + sub + 'order by time asc limit 1;', (time, type, channel))
+        if not res or not before:
+            res = self.query('SELECT filename FROM IMAGES WHERE ' + ' AND '.join(conditions + ['time > %s']) + ' ORDER BY time DESC LIMIT 1;', args + [time], debug=debug)
 
         return res
 
