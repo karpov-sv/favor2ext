@@ -83,7 +83,7 @@ class DB:
             #traceback.print_exc()
             return None
 
-    def get_stars(self, ra0=0, dec0=0, sr0=0, limit=10000, catalog='pickles', extra=[], extrafields=None):
+    def get_stars(self, ra0=0, dec0=0, sr0=0, limit=10000, catalog='pickles', extra=[], extrafields=None, debug=False):
         # Code from astrolibpy, https://code.google.com/p/astrolibpy
         strLength = 10
         __pgTypeHash = {
@@ -133,7 +133,13 @@ class DB:
             substr = "," + substr
 
         cur = self.conn.cursor(cursor_factory = psycopg2.extras.DictCursor)
-        cur.execute("SELECT * " + substr + " FROM " + catalog + " cat WHERE q3c_radial_query(ra, dec, %s, %s, %s) " + extra_str + " " + order + " LIMIT %s;", (ra0, dec0, sr0, limit))
+        string = "SELECT * " + substr + " FROM " + catalog + " cat WHERE q3c_radial_query(ra, dec, %s, %s, %s) " + extra_str + " " + order + " LIMIT %s;"
+        data = (ra0, dec0, sr0, limit)
+
+        if debug:
+            print cur.mogrify(string, data)
+
+        cur.execute(string, data)
 
         desc = cur.description
         names = [d.name for d in desc]
@@ -158,6 +164,17 @@ class DB:
             # b = bt + 0.02927929 - 0.16965093*(bt-vt) - 0.07067606*(bt-vt)**2
             # v = vt + 0.01082083 - 0.09096735*(bt-vt)
 
+            # My cross-calibration using Gaia DR2 (see below)
+            Cb = [-0.0245864 , -0.06181789, -0.18266344,  0.0063554 ]
+            Cv = [-0.02894483,  0.05962909, -0.22627449,  0.10120628]
+            Cr = [ 0.01460373, -0.70958196,  0.10229897,  0.02253856]
+
+            bt_vt = bt - vt
+
+            b = bt + Cb[0] + Cb[1]*bt_vt + Cb[2]*bt_vt**2 + Cb[3]*bt_vt**3
+            v = vt + Cv[0] + Cv[1]*bt_vt + Cv[2]*bt_vt**2 + Cv[3]*bt_vt**3
+            r = vt + Cr[0] + Cr[1]*bt_vt + Cr[2]*bt_vt**2 + Cr[3]*bt_vt**3
+
             table = np.lib.recfunctions.append_fields(table,
                         ['B', 'V', 'R', 'I', 'Berr', 'Verr', 'Rerr', 'Ierr'],
                         [
@@ -168,7 +185,7 @@ class DB:
                             v,
                             # table['vt'] - 0.090*(table['bt'] - table['vt']), # V = VT -0.090*(BT-VT)
                             # R
-                            table['r'],
+                            r,
                             # I
                             table['vt'] - 0.090*(table['bt'] - table['vt']) - 1.6069*(table['j'] - table['k']) + 0.0503, # V - Ic = 1.6069 * (J - Ks) + 0.0503
                             # Berr
