@@ -29,7 +29,11 @@ def process_file(filename, night=None, favor2=None, verbose=False):
         night = get_night(time)
 
     if verbose:
-        print(night,header['TYPE'])
+        print(night, header['TYPE'])
+
+    # Skip old master calibrations
+    if header['TYPE'] in ['bgflat', 'superflat', 'flat']:
+        return None
 
     image = fits.getdata(filename, -1).astype(np.double)
 
@@ -37,7 +41,8 @@ def process_file(filename, night=None, favor2=None, verbose=False):
     width,height = header['NAXIS1'],header['NAXIS2']
 
     # image,header = crop_overscans(image, header, subtract=False)
-    image -= header.get('BASELINE', 100.0)
+    if header['TYPE'] not in ['flat', 'masterflat', 'dark', 'masterdark']:
+        image -= header.get('BASELINE', 100.0)
 
     # Clean up the header a bit
     header.remove('HISTORY', remove_all=True, ignore_missing=True)
@@ -48,9 +53,14 @@ def process_file(filename, night=None, favor2=None, verbose=False):
             header.remove(_, remove_all=True, ignore_missing=True)
 
     type = header.get('TYPE', 'unknown')
+    filter = header.get('FILTER', 'unknown')
 
-    if type not in ['dark', 'masterdark', 'flat', 'skyflat', 'superflat', 'masterflat'] and header.get('CTYPE1'):
-        wcs = WCS(header)
+    if filter == 'Custom':
+        print('Broken filter in', filename)
+        return None
+
+    if type not in ['dark', 'masterdark', 'flat', 'skyflat', 'superflat', 'masterflat']:
+        wcs = WCS(header) if header.get('CTYPE1') else None
         if not wcs or not wcs.sip:
             print('No WCS information in', filename)
             return None
@@ -80,14 +90,13 @@ def process_file(filename, night=None, favor2=None, verbose=False):
         ra0,dec0,radius = None,None,None
         footprint,footprint10 = None,None
 
-    filter = header.get('FILTER', 'unknown')
     time = parse_time(header['TIME'])
 
     exposure = header.get('EXPOSURE')
     shutter = header.get('SHUTTER')
     channel = header.get('CHANNEL ID')
     pos0 = header.get('MIRROR_POS0')
-    pos1 = header.get('MIRROR_POS0')
+    pos1 = header.get('MIRROR_POS1')
 
     mean = np.mean(image)
 
