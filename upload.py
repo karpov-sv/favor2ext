@@ -106,8 +106,8 @@ def process_file(filename, night=None, favor2=None, verbose=False):
 
     return {'filename':filename, 'night':night, 'time':time, 'channel':channel, 'type':type, 'filter':filter, 'shutter':shutter, 'ra0':ra0, 'dec0':dec0, 'radius':radius, 'exposure':exposure, 'width':width, 'height':height, 'mean':mean, 'keywords':keywords}
 
-def process_dir(dir, dbname='favor2'):
-    favor2 = Favor2()
+def process_dir(dir, dbname='favor2', dbhost=None):
+    favor2 = Favor2(dbname=dbname, dbhost=dbhost)
     favor2.conn.autocommit = False
 
     # Night
@@ -152,6 +152,7 @@ if __name__ == '__main__':
 
     parser = OptionParser(usage="usage: %prog [options] arg")
     parser.add_option('-n', '--nthreads', help='Number of threads to use', action='store', dest='nthreads', type='int', default=1)
+    parser.add_option('-H', '--host', help='Database host', action='store', dest='dbhost', type='str', default=None)
     parser.add_option('-d', '--db', help='Database name', action='store', dest='db', type='str', default='favor2')
     parser.add_option('-f', '--files', help='Process files instead of directories', action='store_true', dest='process_files', default=False)
     parser.add_option('-r', '--replace', help='Replace already existing records in database', action='store_true', dest='replace', default=False)
@@ -169,7 +170,7 @@ if __name__ == '__main__':
 
     if options.process_files:
         # Process single files
-        favor2 = Favor2()
+        favor2 = Favor2(dbname=options.db, dbhost=options.dbhost)
         for i,filename in enumerate(args):
             try:
                 print(i, '/', len(args), filename)
@@ -191,7 +192,7 @@ if __name__ == '__main__':
 
             pool = multiprocessing.Pool(options.nthreads)
             # Make wrapper function to pass our arguments inside worker processes
-            fn = partial(process_dir, dbname=options.db)
+            fn = partial(process_dir, dbname=options.db, dbhost=options.dbhost)
             pool.map(fn, dirs, 1)
 
             pool.close()
