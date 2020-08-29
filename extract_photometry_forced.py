@@ -39,6 +39,13 @@ def process_file(filename, favor2=None, fram=None, verbose=False, replace=False,
     color_order = 0
     sn = 5
 
+    if not posixpath.exists(filename):
+        return None
+
+    # Rough but fast checking of whether the file is already processed
+    if not replace and posixpath.exists('photometry/' + filename.split('/')[-2] + '/' + posixpath.splitext(posixpath.split(filename)[-1])[0] + '.cat'):
+        return
+
     #### Preparation
     header = fits.getheader(filename, -1)
 
@@ -314,14 +321,21 @@ if __name__ == '__main__':
 
     (options,files) = parser.parse_args()
 
-    favor2 = None # Favor2(dbname=options.db, dbhost=options.dbhost)
-    fram = None # Favor2(dbname='fram', dbhost=options.dbhost)
+    if len(files) > 1:
+        favor2 = Favor2(dbname=options.db, dbhost=options.dbhost)
+        fram = Favor2(dbname='fram', dbhost=options.dbhost)
+    else:
+        favor2 = None
+        fram = None
 
     for i,filename in enumerate(files):
         if len(files) > 1:
             print(i, '/', len(files), filename)
         try:
             process_file(filename, favor2=favor2, fram=fram, verbose=options.verbose, replace=options.replace, dbname=options.db, dbhost=options.dbhost)
-        except:
-            print('\nException while processing:', filename)
+        except KeyboardInterrupt:
             raise
+        except:
+            print('\nException while processing:', filename, file=sys.stderr)
+            import traceback
+            traceback.print_exc()
