@@ -75,6 +75,11 @@ if __name__ == '__main__':
         wheres += ['type=%s']
         wargs += [options.type]
 
+    if options.filter is not None:
+        print('Searching for images with filter', options.filter, file=sys.stderr)
+        wheres += ['filter=%s']
+        wargs += [options.filter]
+
     if options.night is not None:
         print('Searching for images from night', options.night, file=sys.stderr)
         wheres += ['night=%s']

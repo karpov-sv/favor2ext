@@ -55,7 +55,7 @@ def process_file(filename, night=None, favor2=None, verbose=False):
     type = header.get('TYPE', 'unknown')
     filter = header.get('FILTER', 'unknown')
 
-    if filter == 'Custom':
+    if filter == 'Custom' or 'Pol' in filter:
         print('Broken filter in', filename)
         return None
 
