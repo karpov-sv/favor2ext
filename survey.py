@@ -21,8 +21,10 @@ from scipy.optimize import bisect
 from scipy.special import legendre as leg
 
 import sep
-from StringIO import StringIO
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except:
+    import pickle
 import json
 
 try:
@@ -475,7 +477,7 @@ def match_objects(obj, cat, sr, fname='V', order=4, bg_order=None, cmag=None, co
     if clim is not None:
         idx = cmag < clim
 
-        oidx,cidx,dist,cmag,cmagerr,cmag_lim,color = [_[idx] for _ in oidx,cidx,dist,cmag,cmagerr,cmag_lim,color]
+        oidx,cidx,dist,cmag,cmagerr,cmag_lim,color = [_[idx] for _ in [oidx,cidx,dist,cmag,cmagerr,cmag_lim,color]]
 
     x,y = obj['x'][oidx],obj['y'][oidx]
     oflags = obj['flags'][oidx]

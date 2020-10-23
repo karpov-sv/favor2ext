@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import psycopg2, psycopg2.extras
 import datetime
 
@@ -33,13 +35,13 @@ class DB:
 
     def query(self, string="", data=(), simplify=True, debug=False, array=False):
         if self.conn.closed:
-            print "Re-connecting to DB"
+            print("Re-connecting to DB")
             self.connect(self.connstring, self.readonly)
 
         cur = self.conn.cursor(cursor_factory = psycopg2.extras.DictCursor)
 
         if debug:
-            print cur.mogrify(string, data)
+            print(cur.mogrify(string, data))
 
         if data:
             cur.execute(string, data)
@@ -137,7 +139,7 @@ class DB:
         data = (ra0, dec0, sr0, limit)
 
         if debug:
-            print cur.mogrify(string, data)
+            print(cur.mogrify(string, data))
 
         cur.execute(string, data)
 

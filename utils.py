@@ -32,9 +32,9 @@ def imshow(image, qq=[0.5,97.5], show_colorbar=True, show_axis=True, ax=None, **
         ax = plt.gca()
 
     vmin1,vmax1 = np.percentile(image[np.isfinite(image)], qq)
-    if not kwargs.has_key('vmin'):
+    if not 'vmin' in kwargs:
         kwargs['vmin'] = vmin1
-    if not kwargs.has_key('vmax'):
+    if not 'vmax' in kwargs:
         kwargs['vmax'] = vmax1
     img = ax.imshow(image, **kwargs)
     if not show_axis:
@@ -56,9 +56,9 @@ def binned_map(x, y, value, bins=16, statistic='mean', qq=[0.5, 97.5], show_colo
     gmag0, xe, ye, binnumbers = binned_statistic_2d(x, y, value, bins=bins, statistic=statistic)
 
     vmin1,vmax1 = np.percentile(gmag0[np.isfinite(gmag0)], qq)
-    if not kwargs.has_key('vmin'):
+    if not 'vmin' in kwargs:
         kwargs['vmin'] = vmin1
-    if not kwargs.has_key('vmax'):
+    if not 'vmax' in kwargs:
         kwargs['vmax'] = vmax1
 
     if ax is None:
