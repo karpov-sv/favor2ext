@@ -35,3 +35,29 @@ class Images(models.Model):
         managed = False
         db_table = 'images'
         app_label = 'favor2'
+
+class Photometry(models.Model):
+    time = models.DateTimeField(blank=True, null=True, primary_key=True)
+    channel = models.IntegerField(blank=True, null=True)
+    # night = models.TextField(blank=True, null=True)
+    # filter = models.TextField(blank=True, null=True)
+
+    ra = models.FloatField(blank=True, null=True)
+    dec = models.FloatField(blank=True, null=True)
+    mag = models.FloatField(blank=True, null=True)
+    magerr = models.FloatField(blank=True, null=True)
+
+    x = models.FloatField(blank=True, null=True)
+    y = models.FloatField(blank=True, null=True)
+    fwhm = models.FloatField(blank=True, null=True)
+
+    flags = models.FloatField(blank=True, null=True)
+    color_term = models.FloatField(blank=True, null=True)
+
+    std = models.FloatField(blank=True, null=True)
+    nstars = models.FloatField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'photometry_all'
+        app_label = 'favor2'

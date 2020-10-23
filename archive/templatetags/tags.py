@@ -8,4 +8,9 @@ register = template.Library()
 @register.simple_tag(takes_context=True)
 def get_root(context):
     #return context['request'].path
-    return get_script_prefix()
+    root = get_script_prefix()
+
+    if root != '/':
+        return root
+    else:
+        return ''

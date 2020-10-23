@@ -16,7 +16,7 @@
   </div>
 {% endif %}
 
-<form class="form mb-4" role="form" action="{% url 'search' %}" method="post">{% csrf_token %}
+<form class="form mb-4" role="form" action="{% url 'search' %}" method="get"><!-- {% csrf_token %} -->
   <div class="form-group">
     <div class="input-group">
       <div class="input-group-prepend">

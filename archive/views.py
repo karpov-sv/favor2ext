@@ -25,27 +25,27 @@ def index(request):
     return TemplateResponse(request, 'index.html', context=context)
 
 # @cache_page(3600)
-@csrf_protect
+#@csrf_protect
 def search(request, mode='images'):
     context = {}
 
     message,message_cutout = None,None
 
-    if request.method == 'POST':
+    if request.method == 'GET' and (request.GET.get('coords') or request.GET.get('filename')):
         # Form submission handling
 
         params = {}
 
-        for _ in ['type', 'shutter', 'filter', 'night1', 'night2', 'channel', 'maxdist', 'filename', 'coords', 'magerr', 'nstars']:
-            if request.POST.get(_) and request.POST.get(_) != 'all':
-                params[_] = request.POST.get(_)
+        for _ in ['type', 'shutter', 'filter', 'night1', 'night2', 'channel', 'maxdist', 'filename', 'coords', 'magerr', 'nstars', 'bv_forced', 'nofiltering', 'detailed']:
+            if request.GET.get(_) and request.GET.get(_) != 'all':
+                params[_] = request.GET.get(_)
 
-        coords = request.POST.get('coords')
-        if request.POST.get('sr_value'):
-            sr = float(request.POST.get('sr_value', 0.1))*{'arcsec':1/3600, 'arcmin':1/60, 'deg':1}.get(request.POST.get('sr_units', 'deg'), 1)
+        coords = request.GET.get('coords')
+        if request.GET.get('sr_value'):
+            sr = float(request.GET.get('sr_value', 0.1))*{'arcsec':1/3600, 'arcmin':1/60, 'deg':1}.get(request.GET.get('sr_units', 'deg'), 1)
             params['sr'] = sr
-            params['sr_value'] = request.POST.get('sr_value')
-            params['sr_units'] = request.POST.get('sr_units')
+            params['sr_value'] = request.GET.get('sr_value')
+            params['sr_units'] = request.GET.get('sr_units')
         else:
             sr = 0
         name,ra,dec = resolve(coords)

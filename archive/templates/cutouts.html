@@ -14,7 +14,7 @@
   </div>
 {% endif %}
 
-<form class="form mb-4" role="form" action="{% url 'search_cutouts' %}" method="post">{% csrf_token %}
+<form class="form mb-4" role="form" action="{% url 'search_cutouts' %}" method="get"><!-- {% csrf_token %} -->
   <div class="form-group">
     <div class="input-group">
       <div class="input-group-prepend">

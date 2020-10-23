@@ -211,8 +211,10 @@ def image_details(request, id=0):
 
     return TemplateResponse(request, 'image.html', context=context)
 
-# @cache_page(3600)
+@cache_page(3600)
 def image_preview(request, id=0, size=0):
+    print('image_preview', id, size)
+
     image = Images.objects.get(id=id)
     filename = image.filename
     filename = posixpath.join(settings.BASE_DIR, filename)
@@ -295,7 +297,8 @@ def image_download(request, id, raw=True):
                     cflat = find_calibration_image(image, 'masterflat')
                     if cflat is not None:
                         flat = fits.getdata(cflat.filename, -1)
-                        data *= np.median(flat)/flat
+                        idx = flat > 0.5
+                        data[idx] *= np.median(flat[idx])/flat[idx]
 
         s = StringIO()
         fits.writeto(s, data, header)
@@ -305,7 +308,7 @@ def image_download(request, id, raw=True):
         response['Content-Length'] = len(s.getvalue())
         return response
 
-# @cache_page(3600)
+@cache_page(3600)
 def images_nights(request):
     # nights = Images.objects.order_by('-night').values('night').annotate(count=Count('night'))
     nights = Images.objects.values('night').annotate(count=Count('id')).order_by('-night')
@@ -349,7 +352,8 @@ def image_analysis(request, id=0, mode='fwhm'):
                 cflat = find_calibration_image(image, 'masterflat')
                 if cflat is not None:
                     flat = fits.getdata(cflat.filename, -1)
-                    data *= np.median(flat)/flat
+                    idx = flat > 0.5
+                    data[idx] *= np.median(flat[idx])/flat[idx]
 
     if mode == 'zero':
         fig = Figure(facecolor='white', dpi=72, figsize=(16,8), tight_layout=True)
@@ -513,17 +517,6 @@ def image_cutout(request, id=0, size=0, mode='view'):
     cdark = find_calibration_image(image, 'masterdark')
     if cdark is not None:
         dark = fits.getdata(cdark.filename, -1)
-        if cdark is not None:
-            dark = fits.getdata(cdark.filename, -1)
-        else:
-            cbias,cdc = find_calibration_image(image, 'bias'), find_calibration_image(image, 'dcurrent')
-            if cbias is not None and cdc is not None:
-                bias = fits.getdata(cbias.filename, -1)
-                dc = fits.getdata(cdc.filename, -1)
-
-                dark = bias + image.exposure*dc
-            else:
-                dark = None
 
         if dark is not None:
             data,header = calibrate.calibrate(data, header, dark=dark) # Subtract dark and linearize
@@ -531,7 +524,8 @@ def image_cutout(request, id=0, size=0, mode='view'):
             cflat = find_calibration_image(image, 'masterflat')
             if cflat is not None:
                 flat = fits.getdata(cflat.filename, -1)
-                data *= np.median(flat)/flat
+                idx = flat > 0.5
+                data[idx] *= np.median(flat[idx])/flat[idx]
 
     ra,dec,sr = float(request.GET.get('ra')), float(request.GET.get('dec')), float(request.GET.get('sr'))
 
