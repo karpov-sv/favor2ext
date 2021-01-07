@@ -15,8 +15,11 @@ import datetime
 
 from astropy.time import Time
 from astropy.stats import mad_std
+from scipy.optimize import least_squares
 
 from .models import Photometry
+
+from .parent.favor2 import get_time_from_night
 
 def radectoxieta(ra, dec, ra0=0, dec0=0):
     ra,dec = [np.asarray(_) for _ in ra,dec]
@@ -46,11 +49,11 @@ def get_lc(request):
 
     night1 = request.GET.get('night1')
     if night1:
-        lc = lc.filter(night__gte=night1)
+        lc = lc.filter(time__gte=get_time_from_night(night1))
 
     night2 = request.GET.get('night2')
     if night2:
-        lc = lc.filter(night__lte=night2)
+        lc = lc.filter(time__lte=get_time_from_night(night2, end=True))
 
     # Filter out bad data
     # lc = lc.filter(Q(night__lt='20190216') | Q(night__gt='20190222'))
@@ -83,23 +86,47 @@ def get_lc(request):
     return lc
 
 # TODO: move to lcs.py
-def filter_lc(mag, cbv, bv=None):
+def filter_lc(mag, cbv, cbv2=None, cbv3=None, bv=None):
     if bv is None:
-        bv = get_bv(mag, cbv)
+        bv = get_bv(mag, cbv, cbv2, cbv3)
 
-    return mag + bv*cbv
+    res = mag + bv*cbv
 
-def get_bv(mag, cbv):
-    X = np.vstack([np.ones_like(mag), cbv]).T
-    Y = mag
+    if cbv2 is not None:
+        res += bv**2*cbv2
 
-    idx = np.ones_like(Y, dtype=np.bool)
-    for i in xrange(3):
-        C = np.linalg.lstsq(X[idx], Y[idx])[0]
-        YY = np.sum(X*C, axis=1)
-        idx = np.abs(Y-YY) < 3.0*mad_std(Y-YY)
+    if cbv3 is not None:
+        res += bv**3*cbv3
 
-    return -C[1]
+    return res
+
+def lstsq_fn(x, mag, cbv, cbv2, cbv3):
+    return mag + x[1]*cbv + x[1]**2*cbv2 + x[1]**3*cbv3 - x[0]
+
+def get_bv(mag, cbv, cbv2=None, cbv3=None):
+    idx = np.isfinite(mag)
+
+    if not np.sum(idx):
+        return 0
+
+    if cbv2 is not None and cbv3 is not None:
+        for iter in range(1):
+            C = least_squares(lstsq_fn, [np.median(mag[idx]), 0.5], args=(mag[idx], cbv[idx], cbv2[idx], cbv3[idx]), verbose=0)
+            mag1 = C.x[0] + cbv*C.x[1] + cbv2*C.x[1]**2 + cbv3*C.x[1]**3
+            idx = np.abs(mag - mag1) < 3.0*mad_std((mag - mag1)[idx])
+
+        return C.x[1]
+    else:
+        X = np.vstack([np.ones_like(mag), cbv]).T
+        Y = mag
+
+        idx = np.ones_like(Y, dtype=np.bool)
+        for i in xrange(3):
+            C = np.linalg.lstsq(X[idx], Y[idx])[0]
+            YY = np.sum(X*C, axis=1)
+            idx = np.abs(Y-YY) < 3.0*mad_std(Y-YY)
+
+        return -C[1]
 
 def lc(request, mode="jpg", size=800):
     if True:
@@ -117,6 +144,8 @@ def lc(request, mode="jpg", size=800):
         flags = np.array([_.flags for _ in lc])
         fwhms = np.array([_.fwhm for _ in lc])
         color_terms = np.array([_.color_term for _ in lc])
+        color_terms2 = np.array([_.color_term2 for _ in lc])
+        color_terms3 = np.array([_.color_term3 for _ in lc])
 
         stds = np.array([_.std for _ in lc])
         nstars = np.array([_.nstars for _ in lc])
@@ -135,6 +164,8 @@ def lc(request, mode="jpg", size=800):
         flags = np.repeat(0, len(times))
         fwhms = np.random.normal(2.0, size=len(times))
         color_terms = np.repeat(0.0, len(times))
+        color_terms2 = np.repeat(0.0, len(times))
+        color_terms3 = np.repeat(0.0, len(times))
 
         stds = np.random.normal(0.8, 0.05, size=len(times))
         nstars = np.repeat(1000, len(times))
@@ -147,6 +178,9 @@ def lc(request, mode="jpg", size=800):
     dec = float(request.GET.get('dec'))
     sr = float(request.GET.get('sr', 0.01))
     name = request.GET.get('name')
+
+    if name in ['sexadecimal', 'degrees']:
+        name = None
 
     if request.GET.get('nofiltering'):
         filtering = False
@@ -165,14 +199,14 @@ def lc(request, mode="jpg", size=800):
         for _ in range(3):
             idx0 &= fwhms < np.median(fwhms[idx0]) + 3.0*mad_std(fwhms[idx0])
 
-        for _ in range(3):
-            idx0 &= color_terms < np.median(color_terms[idx0]) + 3.0*mad_std(color_terms[idx0])
+        # for _ in range(3):
+        #     idx0 &= color_terms < np.median(color_terms[idx0]) + 3.0*mad_std(color_terms[idx0])
 
     if bv_forced:
         bv = float(bv_forced)
     else:
-        bv = get_bv(mags[idx0], color_terms[idx0])
-    mags = filter_lc(mags, color_terms, bv)
+        bv = get_bv(mags[idx0], color_terms[idx0], color_terms2[idx0], color_terms3[idx0])
+    mags = filter_lc(mags, color_terms, color_terms2, color_terms3, bv)
 
     context = {}
 
@@ -181,7 +215,12 @@ def lc(request, mode="jpg", size=800):
     context['sr'] = sr
     context['filtering'] = filtering
 
-    title = '%s - %.4f %.3f %.3f - %d pts - mean=%.2f std=%.2f B-V=%.2f' % (request.GET.get('name'), ra, dec, sr, len(mags), np.mean(mags), np.std(mags), bv)
+    if name:
+        title = '%s - ' % name
+    else:
+        title = ''
+
+    title += '%.4f %.3f %.3f - %d pts - mean=%.2f std=%.2f B-V=%.2f' % (ra, dec, sr, len(mags[idx0]), np.mean(mags[idx0]), np.std(mags[idx0]), bv)
 
     xi,eta = radectoxieta(ras, decs, ra, dec)
     xi *= 3600

@@ -31,7 +31,7 @@ def search(request, mode='images'):
 
     message,message_cutout = None,None
 
-    if request.method == 'GET' and (request.GET.get('coords') or request.GET.get('filename')):
+    if request.method == 'GET' and 'coords' in request.GET:# and (request.GET.get('coords') or request.GET.get('filename')):
         # Form submission handling
 
         params = {}
@@ -48,7 +48,11 @@ def search(request, mode='images'):
             params['sr_units'] = request.GET.get('sr_units')
         else:
             sr = 0
-        name,ra,dec = resolve(coords)
+
+        if coords:
+            name,ra,dec = resolve(coords)
+        else:
+            name,ra,dec = None,None,None
 
         if name:
             params['name'] = name

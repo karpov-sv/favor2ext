@@ -53,6 +53,8 @@ class Photometry(models.Model):
 
     flags = models.FloatField(blank=True, null=True)
     color_term = models.FloatField(blank=True, null=True)
+    color_term2 = models.FloatField(blank=True, null=True)
+    color_term3 = models.FloatField(blank=True, null=True)
 
     std = models.FloatField(blank=True, null=True)
     nstars = models.FloatField(blank=True, null=True)

@@ -44,11 +44,17 @@ def split_path(filename):
 def fix_remote_path(filename, channel_id=0):
     return filename
 
-def get_time_from_night(night):
-    m = re.match("^(\d\d\d\d)_(\d\d)_(\d\d)", night)
-    if m:
-        t = [int(m.group(i)) for i in range(1,4)]
-        return datetime.datetime(t[0], t[1], t[2])
+def get_time_from_night(night, end=False):
+    if end:
+        delta = datetime.timedelta(days=1)
+    else:
+        delta = datetime.timedelta(days=0)
+
+    for tmpl in ["^(\d\d\d\d)_(\d\d)_(\d\d)", "^(\d\d\d\d)(\d\d)(\d\d)", "^(\d\d\d\d)-(\d\d)-(\d\d)"]:
+        m = re.match(tmpl, night)
+        if m:
+            t = [int(m.group(i)) for i in range(1,4)]
+            return datetime.datetime(t[0], t[1], t[2]) + delta
 
 def parse_time(string):
     return datetime.datetime.strptime(string, '%d.%m.%Y %H:%M:%S.%f')
