@@ -4,7 +4,6 @@ import numpy as np
 
 from esutil import coords, htm
 import statsmodels.api as sm
-from scipy.spatial import cKDTree
 
 from survey import make_series
 
@@ -17,7 +16,8 @@ class Match:
     def match(self, obj=None, cat=None, sr=5./3600, verbose=False, predict=True,
               ra=None, dec=None, x=None, y=None, mag=None, magerr=None, flags=None,
               filter_name='V', order=4, bg_order=None, color_order=None,
-              hard_mag_limit=99, mag_id=0, magerr0=0.02, sn=None, thresh=5.0):
+              hard_mag_limit=99, mag_id=0, magerr0=0.02, sn=None, thresh=5.0,
+              mask=None, good_flags=0x0):
 
         """Match a set of points with catalogue"""
 
@@ -126,10 +126,16 @@ class Match:
 
         if self.color_order is not None:
             X += make_series(self.color, sx, sy, order=self.color_order)
+            X += make_series(self.color**2, sx, sy, order=self.color_order)
+            X += make_series(self.color**3, sx, sy, order=self.color_order)
 
         X = np.vstack(X).T
 
-        self.idx0 = (self.oflags == 0) & (self.cmag < hard_mag_limit) & (self.cmag < mag_limit)
+        self.idx0 = ((self.oflags & (~good_flags)) == 0) & (self.cmag < hard_mag_limit) & (self.cmag < mag_limit)
+
+        if mask is not None:
+            # Exclude masked objects
+            self.idx0 &= ~mask
 
         if sn is not None:
             self.idx0 &= (self.omagerr < 1.0/sn)
@@ -144,6 +150,7 @@ class Match:
                 return False
 
             self.C = sm.WLS(self.zero[self.idx], X[self.idx], weights=self.weights[self.idx]).fit()
+            # self.C = sm.RLM(self.zero[self.idx], X[self.idx]).fit()
 
             self.zero_model = np.sum(X*self.C.params, axis=1)
 
@@ -211,9 +218,15 @@ class Match:
             Xc = make_series(1.0, sx, sy, order=self.color_order)
             Xc = np.vstack(Xc).T
 
-            self.color_term = np.sum(Xc*self.C.params[X.shape[1]:], axis=1)
+            self.color_term = np.sum(Xc*self.C.params[X.shape[1]:X.shape[1]+Xc.shape[1]], axis=1)
+            self.color_term2 = np.sum(Xc*self.C.params[X.shape[1]+Xc.shape[1]:X.shape[1]+2*Xc.shape[1]], axis=1)
+            self.color_term3 = np.sum(Xc*self.C.params[X.shape[1]+2*Xc.shape[1]:X.shape[1]+3*Xc.shape[1]], axis=1)
+            # self.color_term2 = np.zeros_like(mag)
+            # self.color_term3 = np.zeros_like(mag)
         else:
             self.color_term = np.zeros_like(mag)
+            self.color_term2 = np.zeros_like(mag)
+            self.color_term3 = np.zeros_like(mag)
 
         # Approx magnitude limit (S/N=10) at every position
         if self.C_mag_limit is not None:
@@ -223,30 +236,4 @@ class Match:
         else:
             self.mag_limit = 99.0*np.ones_like(mag)
 
-        # Simple analysis of proximity to "good" points used for model building
-        mx,my = self.ox[self.idx], self.oy[self.idx]
-        kdo = cKDTree(np.array([x, y]).T)
-        kdm = cKDTree(np.array([mx, my]).T)
-
-        # Mean distance between "good" points
-        mr0 = np.sqrt(self.width*self.height/np.sum(self.idx))
-
-        # Closest "good" points
-        m = kdm.query_ball_tree(kdm, 5.0*mr0)
-
-        dists = []
-        for i,ii in enumerate(m):
-            if len(ii) > 1:
-                d1 = [np.hypot(mx[i] - mx[_], my[i] - my[_]) for _ in ii]
-                d1 = np.sort(d1)
-
-                dists.append(d1[1])
-        mr1 = np.median(dists)
-
-        # Closest "good" points to objects
-        m = kdo.query_ball_tree(kdm, 5.0*mr1)
-
-        self.good_idx = np.array([len(_) > 1 for _ in m])
-
-        if verbose:
-            print(np.sum(self.good_idx), 'of', len(mag), 'objects are at good distances from model points')
+        self.good_idx = np.ones_like(x, dtype=np.bool)

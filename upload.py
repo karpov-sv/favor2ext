@@ -200,4 +200,4 @@ if __name__ == '__main__':
 
         else:
             for dirname in dirs:
-                process_dir(dirname)
+                process_dir(dirname, dbname=options.db, dbhost=options.dbhost)

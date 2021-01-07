@@ -152,14 +152,34 @@ def make_kernel(r0=1.0, ext=1.0):
 
     return image
 
-def mad(arr):
-    """ Median Absolute Deviation: a "Robust" version of standard deviation.
-        Indices variabililty of the sample.
-        https://en.wikipedia.org/wiki/Median_absolute_deviation
-    """
-    arr = np.ma.array(arr).compressed() # should be faster to not use masked arrays.
-    med = np.median(arr)
-    return np.median(np.abs(arr - med))
+def fit_2d(x, y, z, x0, y0, weights=None, order=4, niter=3):
+    # Fit
+    sx = (x - np.mean(x))/np.max(x)
+    sy = (y - np.mean(y))/np.max(y)
+
+    X = make_series(1.0, sx, sy, order=order)
+    X = np.vstack(X).T
+    Y = z
+
+    idx = np.isfinite(Y)
+
+    for i in range(niter):
+        if weights is not None:
+            C = sm.WLS(Y[idx], X[idx], weights=weights[idx]).fit()
+        else:
+            C = sm.RLM(Y[idx], X[idx]).fit()
+
+        YY = np.sum(X*C.params, axis=1)
+        idx = np.abs(Y-YY - np.median((Y-YY)[idx])) < 3.0*mad_std((Y-YY)[idx])
+
+    # Predict
+    sx = (x0 - np.mean(x))/np.max(x)
+    sy = (y0 - np.mean(y))/np.max(y)
+
+    X = make_series(1.0, sx, sy, order=order)
+    X = np.vstack(X).T
+
+    return np.sum(X*C.params, axis=1)
 
 def get_objects_sep(image, header=None, mask=None, thresh=4.0, aper=3.0, bkgann=None, r0=0.5, gain=1, edge=0, minnthresh=2, minarea=5, relfluxradius=2.0, wcs=None, use_fwhm=False, use_mask_bg=False, use_mask_large=False, subtract_bg=True, npix_large=300, sn=10.0, verbose=True, get_fwhm=False, **kwargs):
     if r0 > 0.0:

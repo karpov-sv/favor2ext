@@ -70,6 +70,9 @@ class Calibrator:
         saturation = self.header['SATURATE']
         bias0 = self.header['BIAS0']
 
+        if header and header.get('SIMPLEPREAMP', 2) == 1: # 11-bit mode, GLOBAL shutter
+            saturation = 1500
+
         v = image.astype(np.float) - bias0
         idx0 = v <= 0.1
         v[idx0] = 0.1
@@ -136,18 +139,25 @@ def calibrate(image, header=None, channel=None, shutter=None, dark=None, calibra
         else:
             calibrator = Calibrator(shutter=shutter, channel=channel)
 
+    if header and header.get('SERIAL') in ['SCC-01798']:
+    # Temporarily disable 2nd channel with 10th channel camera
+        calibrator = None
+
     if calibrator:
         if not key in _calibrators:
             _calibrators[key] = calibrator
 
-    if header is not None:
-        image,header = calibrator.calibrate(image, header)
-    else:
-        image = calibrator.calibrate(image)
+        if header is not None:
+            image,header = calibrator.calibrate(image, header)
+        else:
+            image = calibrator.calibrate(image)
 
-    if dark is not None:
-        dark = calibrator.calibrate(dark)
-        image -= dark
+        if dark is not None:
+            dark = calibrator.calibrate(dark)
+            image -= dark
+    else:
+        if dark is not None:
+            image -= dark
 
     if header is not None:
         return image,header
