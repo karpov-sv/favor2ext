@@ -115,7 +115,8 @@
 
   <div class="form-text text-muted">
     It will return cutouts of all object images containing the specified sky point, with the size defined by the search radius.<br>
-    <i>Max Dist</i> parameter defines the maximal acceptable distance from frame center, and may be useful to skip the images where cutout center is in the frame corners where distortions are significant.
+    <i>Max Dist</i> parameter defines the maximal acceptable distance from frame center, and may be useful to skip the images where cutout center is in the frame corners where distortions are significant.<br>
+    The cutouts are dark subtracted and flatfielded, and have proper WCS information in their headers, but not North aligned.
   </div>
 </form>
 

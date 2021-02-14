@@ -18,17 +18,71 @@
   </p>
 
   <p>
-    The channels are equipped with an Andor Neo sCMOS detector having 2560x2160 pixels 6.4um each. Field of view of a channel is roughly 9x11 degrees with angular resolution of roughly 16'' per pixel. The detector is able to operate with exposure times as small as 0.03 s, in our work we use 0.1 s exposures providing us with 10 frames per second.
+    The channels are equipped with an Andor Neo sCMOS detector having 2560x2160 pixels 6.4um each. Field of view of a channel is roughly 9x11 degrees with angular resolution of roughly 16'' per pixel. The detector is able to operate with exposure times as small as 0.03 s, in our work we typically use 0.1 s exposures providing us with 10 frames per second in order to detect rapidly variable sky objects on a sub-second time scales.
   </p>
 
   <p>
-    The Mini-MegaTORTORA (MMT) instrument is operational since Jun 2014. This archive presents the subset of data it acquired in a wide-field "deep survey" regime, mostly using exposures of 20 to 60 seconds in a white light (the complete Mini-MegaTORTORA data, including archives of detected meteors, satellites etc, is available <a href="http://mmt.favor2.info">here</a>).
+    The Mini-MegaTORTORA (MMT-9) instrument is operational since Jun 2014. This archive presents the subset of data it acquired in a wide-field "deep survey" regime, mostly using exposures of 20 to 60 seconds in a white light (the high temporal resolution Mini-MegaTORTORA data, including archives of detected meteors, satellites etc, is available <a href="http://mmt.favor2.info">here</a>). This survey mode occupies small fraction of Mini-MegaTORTORA night time, but still may be useful for studying the variability on a hours to years time scales.
   </p>
 
   <p>
-    Archive covers nights from <a href="{% url 'images' %}?night={{ nights.min }}">{{ nights.min }}</a> till <a href="{% url 'images' %}?night={{ nights.max }}">{{ nights.max }}</a>, and has <a href="{% url 'images' %}">{{ nights.count }}</a> images in total.
+    Archive covers nights from <a href="{% url 'images' %}?night={{ nights.min }}">{{ nights.min }}</a> till <a href="{% url 'images' %}?night={{ nights.max }}">{{ nights.max }}</a>, and has <a href="{% url 'images' %}">{{ nights.count }}</a> images in total. Images are uploaded to the archive with typical delay of one to two days after their acquitision, while the photometric data are updated only occasionally, most likely once a month.
   </p>
 
   <img class="img-fluid mx-auto d-block" src="{% get_root %}{% static "survey_coverage.jpg" %}"/>
+
+  <h4>Team</h4>
+  <p>
+    The survey is being performed and this archive is being maintained by <a href="https://ceico.cz/team/researchers/sergey-karpov">Sergey Karpov</a>.
+  </p>
+
+  <h4>References</h4>
+  <ul>
+    <li>
+      Karpov S.V., Beskin G.M., Biryukov A.V., Bondar S.F., Ivanov E.A., Katkova E.V., Orekhova N., Perkov A.V., Sasyuk V.V. <b>Photometric calibration of a wide-field sky survey data from Mini-MegaTORTORA</b>, <i>Astronomische Nachrichten</i>, 2018, Volume 339, Issue 5, Pages 375-381 - <a href="http://dx.doi.org/10.1002/asna.201813509">doi:10.1002/asna.201813509</a>
+    </li>
+    <li>
+      Karpov S.V., Beskin G.M., Biryukov A.V., Bondar S.F., Ivanov E.A., Katkova E.V., Orekhova N., Perkov A.V., Plokhotnichenko V.L., Sasyuk V.V., Pandey J. <b>Observations of transient events with Mini-MegaTORTORA wide-field monitoring system with sub-second temporal resolution</b>, <i>Revista Mexicana de Astronomia y Astrofisica (Serie de Conferencias)</i>, 2019, 51, pp. 30-38 - <a href="http://doi.org/10.22201/ia.14052059p.2019.51.06">doi:10.22201/ia.14052059p.2019.51.06</a>
+    </li>
+  </ul>
+  <p>
+  Full list of publications from Mini-MegaTORTORA team is available <a href="http://mmt.favor2.info/about/publications">here</a>.
+  </p>
+
+  <h4>Acknowledgements</h4>
+  <p>
+    The survey data are hosted at the servers of <a href="http://www.fzu.cz">Institute of Physics of Czech Academy of Sciences</a> and processed on the computing cluster of <a href="http://ceico.cz">CEICO</a>. The work is supported by the Ministry of Education, Youth and Sports of the Czech Republic (project CoGraDS, grant number CZ.02.1.01/0.0/0.0/15_003/0000437).
+    Mini-MegaTORTORA belongs to Kazan Federal University, and its operation is performed according to the Russian Government Program of Competitive Growth of Kazan Federal University.
+  </p>
+
+  <a href="http://ec.europa.eu/regional_policy/en/funding/erdf/">
+    <img src="https://ceico.cz/img/eu.png" style="height:60px">
+  </a>
+
+  <a href="http://www.msmt.cz/">
+    <img src="https://ceico.cz/img/msmt.png" style="height:60px">
+  </a>
+
+  <a href="http://www.fzu.cz/">
+    <img src="https://ceico.cz/Root/Sites/Default_Site/main/UploadedImages/FZU-L-RGB.png" style="height:60px">
+  </a>
+
+  <a href="https://www.avcr.cz/">
+    <img src="https://ceico.cz/Root/Sites/Default_Site/main/UploadedImages/CAS_basic_logo_ENG_rgb.png" style="height:60px">
+  </a>
+
+  <!--
+  <a href="https://ceico.cz/">
+    <img src="https://ceico.cz/Root/Global/images/logob.gif" style="height:60px">
+  </a>
+  -->
+
+  <a href="http://www.sao.ru">
+    <img src="https://www.sao.ru/Images/saologo-l.png"  style="height:60px; padding-left: 10px">
+  </a>
+
+  <a href="https://kpfu.ru/">
+    <img src="https://shelly.kpfu.ru/pdf/supersite/mainpage/images/footer-logo.png"  style="height:60px; padding-left: 10px">
+  </a>
 
 {% endblock %}
