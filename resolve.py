@@ -1,12 +1,21 @@
-#!/usr/bin/env python
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-import urllib, urllib2
+try:
+    from urllib2 import urlopen
+except:
+    from urllib.request import urlopen
+
+try:
+    from urllib import urlencode
+except:
+    from urllib.parse import urlencode
+
 import xml.dom.minidom as minidom
 import re
 
 def simbadResolve(name = 'm31'):
     web = 'http://cdsweb.u-strasbg.fr/viz-bin/nph-sesame/-oxpi/SNVA?'
-    res = urllib2.urlopen(web + urllib.urlencode([('obj', name)]).split('=')[1]).read()
+    res = urlopen(web + urlencode([('obj', name)]).split('=')[1]).read()
 
     try:
         xml = minidom.parseString(res)

@@ -73,7 +73,7 @@ class Calibrator:
         if header and header.get('SIMPLEPREAMP', 2) == 1: # 11-bit mode, GLOBAL shutter
             saturation = 1500
 
-        v = image.astype(np.float) - bias0
+        v = image.astype(np.double) - bias0
         idx0 = v <= 0.1
         v[idx0] = 0.1
 

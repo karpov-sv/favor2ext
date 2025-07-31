@@ -17,7 +17,12 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from skimage.transform import rescale
-from StringIO import StringIO
+try:
+    # python2
+    from StringIO import StringIO
+except ImportError:
+    # python3
+    from io import StringIO
 from esutil import htm
 
 from astropy.io import fits
@@ -222,10 +227,10 @@ def image_preview(request, id=0, size=0):
     data = fits.getdata(filename, -1).astype(np.double)
     header = fits.getheader(filename, -1)
 
-    if request.GET.has_key('size'):
+    if 'size' in request.GET:
         size = int(request.GET.get('size', 0))
 
-    if not request.GET.has_key('raw'):
+    if 'raw' not in request.GET:
         if image.type not in ['masterdark', 'masterflat']:
             dark = None
 
@@ -250,7 +255,7 @@ def image_preview(request, id=0, size=0):
         ldata,lheader = data,header
 
     if size:
-        data = rescale(data, size/data.shape[1], mode='reflect', multichannel=False, anti_aliasing=True, preserve_range=True)
+        data = rescale(data, size/data.shape[1], mode='reflect', anti_aliasing=True, preserve_range=True)
 
     figsize = (data.shape[1], data.shape[0])
 
@@ -546,9 +551,9 @@ def image_cutout(request, id=0, size=0, mode='view'):
 
     if size:
         if size > crop.shape[1]:
-            crop = rescale(crop, size/crop.shape[1], mode='reflect', multichannel=False, anti_aliasing=False, order=0)
+            crop = rescale(crop, size/crop.shape[1], mode='reflect', anti_aliasing=False, order=0)
         else:
-            crop = rescale(crop, size/crop.shape[1], mode='reflect', multichannel=False, anti_aliasing=True)
+            crop = rescale(crop, size/crop.shape[1], mode='reflect', anti_aliasing=True)
 
     figsize = (crop.shape[1], crop.shape[0])
 

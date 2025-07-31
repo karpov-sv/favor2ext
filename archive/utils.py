@@ -4,7 +4,11 @@ from django.db import connections, transaction
 from django.shortcuts import redirect
 
 import posixpath
-import urllib
+try:
+    from urllib import urlencode
+except:
+    from urllib.parse import urlencode
+
 
 from django.contrib.auth.decorators import permission_required, user_passes_test, PermissionDenied
 
@@ -78,6 +82,6 @@ def redirect_get(url_or_view, *args, **kwargs):
 
     response = redirect(url_or_view, *args, **kwargs)
     if get_params:
-        response['Location'] += '?' + urllib.urlencode(get_params)
+        response['Location'] += '?' + urlencode(get_params)
 
     return response

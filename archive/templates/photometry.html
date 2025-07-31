@@ -67,7 +67,7 @@
          Plotly.newPlot('stdDiv', [], layout_std, config);
        }
 
-       Plotly.d3.json('{{ lc_json }}', function(error, data){
+       Plotly.d3.json('{{ lc_json|safe }}', function(error, data){
          if (error) {
            $('#messageDiv').text("Error loading lightcurve data");
 
@@ -308,9 +308,9 @@
 
     {% if lc_text %}
       <div>
-        <a href="{{ lc_text }}">Download full data</a>
+        <a href="{{ lc_text|safe }}">Download full data</a>
         -
-        <a href="{{ lc_mjd }}">Short and filtered</a>
+        <a href="{{ lc_mjd|safe }}">Short and filtered</a>
       </div>
     {% endif %}
 

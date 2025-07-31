@@ -5,14 +5,20 @@
 
 {% block ptitle %}Image Cutouts : Mini-MegaTORTORA Sky Survey{% endblock %}
 
-{% block title_div %}
-  <h1>
-    {{ request.GET.sr }}</b> deg around {{ request.GET.ra }} {{request.GET.dec }}: {{ images|qs_length}} images
-  </h1>
-
-{% endblock %}
+{% block title %}Image cutouts from Mini-MegaTORTORA archive{% endblock %} %}
 
 {% block content %}
+
+  {% if images %}
+    <div class="alert alert-success" role="alert">
+      {{ images|qs_length}} image cutouts around {{ request.GET.ra|floatformat:3 }} {{request.GET.dec|floatformat:3 }}
+      with {{ request.GET.sr|floatformat:2 }}</b> deg radius
+    </div>
+  {% else %}
+    <div class="alert alert-success" role="alert">
+      No images are found to cover position {{ request.GET.ra|floatformat:3 }} {{request.GET.dec|floatformat:3 }}
+    </div>
+  {% endif %}
 
 <div class="pull-right">
   {% if request.GET.singlepage %}

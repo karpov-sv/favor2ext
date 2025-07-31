@@ -64,7 +64,7 @@ def binned_map(x, y, value, bins=16, statistic='mean', qq=[0.5, 97.5], show_colo
     if ax is None:
         ax = plt.gca()
 
-    if not kwargs.has_key('aspect'):
+    if 'aspect' not in kwargs:
         kwargs['aspect'] = 'auto'
 
     im = ax.imshow(gmag0.T, origin='lower', extent=[xe[0], xe[-1], ye[0], ye[-1]], interpolation='nearest', **kwargs)

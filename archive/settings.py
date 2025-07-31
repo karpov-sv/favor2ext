@@ -27,7 +27,7 @@ SECRET_KEY = '(#((9dc(bdy@ibrb5t7ud=0zm45bjm%52n1eyr6)7%#u$@5!44'
 #DEBUG = False
 DEBUG = True
 
-ALLOWED_HOSTS = '*'
+ALLOWED_HOSTS = ['*']
 
 INTERNAL_IPS = ['127.0.0.1']
 
@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'archive',
     'archive.templatetags.filters',
     'debug_toolbar',
-    'debug_toolbar_line_profiler',
+#    'debug_toolbar_line_profiler',
 ]
 
 MIDDLEWARE = [
@@ -72,7 +72,7 @@ DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.signals.SignalsPanel',
     'debug_toolbar.panels.logging.LoggingPanel',
     'debug_toolbar.panels.redirects.RedirectsPanel',
-    'debug_toolbar_line_profiler.panel.ProfilingPanel',
+#    'debug_toolbar_line_profiler.panel.ProfilingPanel',
 ]
 
 ROOT_URLCONF = 'archive.urls'
@@ -112,7 +112,9 @@ DATABASES = {
         # 'USER': 'karpov',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         # 'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-        'HOST': '147.231.26.36',                      # Set to empty string for localhost. Not used with sqlite3.
+#        'HOST': '147.231.11.240',                      # Set to empty string for localhost. Not used with sqlite3.
+#        'HOST': '147.231.11.243',                      # Set to empty string for localhost. Not used with sqlite3.
+        'HOST': '147.231.11.123',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
@@ -167,7 +169,7 @@ STATIC_URL = '/static/'
 # Add all local variables to template context
 _context = {}
 local_context = locals()
-for (k,v) in local_context.items():
+for (k,v) in list(local_context.items()):
     _context[k] = str(v)
 
 def settings_context(context):

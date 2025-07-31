@@ -22,7 +22,7 @@ from .models import Photometry
 from .parent.favor2 import get_time_from_night
 
 def radectoxieta(ra, dec, ra0=0, dec0=0):
-    ra,dec = [np.asarray(_) for _ in ra,dec]
+    ra,dec = [np.asarray(_) for _ in (ra,dec)]
     delta_ra = np.asarray(ra - ra0)
 
     delta_ra[(ra < 10) & (ra0 > 350)] += 360
@@ -120,8 +120,8 @@ def get_bv(mag, cbv, cbv2=None, cbv3=None):
         X = np.vstack([np.ones_like(mag), cbv]).T
         Y = mag
 
-        idx = np.ones_like(Y, dtype=np.bool)
-        for i in xrange(3):
+        idx = np.ones_like(Y, dtype=bool)
+        for i in range(3):
             C = np.linalg.lstsq(X[idx], Y[idx])[0]
             YY = np.sum(X*C, axis=1)
             idx = np.abs(Y-YY) < 3.0*mad_std(Y-YY)
@@ -152,7 +152,7 @@ def lc(request, mode="jpg", size=800):
     else:
         time0 = datetime.datetime(2018, 1, 1)
 
-        times = np.array([time0 + datetime.timedelta(hours=8)*_ for _ in xrange(1000)])
+        times = np.array([time0 + datetime.timedelta(hours=8)*_ for _ in range(1000)])
         channels = np.repeat(1, len(times))
         filters = np.repeat('V', len(times))
         ras = float(request.GET.get('ra')) + np.random.normal(0, 0.001, size=len(times))
@@ -189,7 +189,7 @@ def lc(request, mode="jpg", size=800):
     bv_forced = request.GET.get('bv_forced', None)
 
     # Quality cuts
-    idx0 = np.ones_like(mags, dtype=np.bool)
+    idx0 = np.ones_like(mags, dtype=bool)
     if filtering:
         idx0 &= flags < 2
 
@@ -272,7 +272,7 @@ def lc(request, mode="jpg", size=800):
 
         data = {'name': name, 'title': title, 'ra': ra, 'dec': dec, 'sr': sr, 'lcs': lcs}
 
-        return HttpResponse(json.dumps(data), content_type="application/json")
+        return HttpResponse(json.dumps(data, default=str), content_type="application/json")
 
     elif mode == 'text':
         response = HttpResponse(request, content_type='text/plain')
@@ -281,7 +281,7 @@ def lc(request, mode="jpg", size=800):
 
         print('# Date Time MJD Channel Filter Mag Magerr Flags Std Nstars FWHM ColorTerm', file=response)
 
-        for _ in xrange(len(times)):
+        for _ in range(len(times)):
             print(times[_], mjds[_], channels[_], filters[_], mags[_], magerrs[_], flags[_], stds[_], nstars[_], fwhms[_], color_terms[_], file=response)
 
         return response
@@ -295,7 +295,7 @@ def lc(request, mode="jpg", size=800):
 
         idx = idx0
 
-        for _ in xrange(len(times[idx])):
+        for _ in range(len(times[idx])):
             print(mjds[idx][_], mags[idx][_], magerrs[idx][_], file=response)
 
         return response
